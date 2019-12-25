@@ -16,9 +16,16 @@
 @interface SeeAudio ()
 {
     /*
+     1.为了音视频的编辑显示以及其他处理，需要设置一个最的小标准，因而产生CMTime，
+     （eg:如果音视频编辑器上的一格，表示好几帧，那么这几帧无法拆分）
+     2.eg：0.001s 播放了 1 帧，用CMTime表示，最好是一个CMTime的value增加 1 ，音视频增加1帧。
+     （只要设置timescale=1000，value = 0.001s * （1000份/s）= 1 份 ）
+     3.不能以增加零点几个CMTime的value，音视频增加1帧，这样就没有意义了，所以只能大，可以用增加几个CMTime的value，音视频增加1帧。
+     eg：如果设置 timescale = 10000  CMTime的value增加10，音视频增加1帧。
+     
      typedef struct {
      CMTimeValue value; // 当前的CMTimeValue 的值
-     CMTimeScale timescale; //时间尺 时间基  当前的CMTimeValue 的参考标准 ( 即把1s分为多少份)
+     CMTimeScale timescale; //时间尺  时间基  当前的CMTimeValue 的参考标准 ( 即把1s分为多少份)
      CMTimeFlags flags;
      CMTimeEpoch epoch;
      } CMTime
@@ -26,7 +33,7 @@
      eg:timescale = 1000 份/s; 时间 2.5s 转换为CMTime 的value为多大
      value = 2.5 * 1000 = 2500;
      
-     真实时间 = value/timescale = 2500 份 / 1000 份/s= 2.5s;
+     真实时间 = value/timescale = （2500 份） / （1000 份/s）= 2.5s;
      */
     int64_t totalSamples; //时间标尺下的总时长（CMTime value）（timescale 即把1s分为多少份 ）
     
