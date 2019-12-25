@@ -14,6 +14,9 @@
 		8B09614723B1F96500EC2F6A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8B09614623B1F96500EC2F6A /* Assets.xcassets */; };
 		8B09614A23B1F96500EC2F6A /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8B09614823B1F96500EC2F6A /* LaunchScreen.storyboard */; };
 		8B09614D23B1F96500EC2F6A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 8B09614C23B1F96500EC2F6A /* main.m */; };
+		8B09615423B1FC1400EC2F6A /* whenImissYou.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 8B09615323B1FC1400EC2F6A /* whenImissYou.mp3 */; };
+		8B09615723B1FC7A00EC2F6A /* SeeAudio.m in Sources */ = {isa = PBXBuildFile; fileRef = 8B09615623B1FC7A00EC2F6A /* SeeAudio.m */; };
+		8BBB951B23B3258E00B4005F /* whenImissYou.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 8BBB951A23B3258E00B4005F /* whenImissYou.m4a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -29,6 +32,10 @@
 		8B09614923B1F96500EC2F6A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		8B09614B23B1F96500EC2F6A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8B09614C23B1F96500EC2F6A /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		8B09615323B1FC1400EC2F6A /* whenImissYou.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = whenImissYou.mp3; sourceTree = "<group>"; };
+		8B09615523B1FC7A00EC2F6A /* SeeAudio.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeeAudio.h; sourceTree = "<group>"; };
+		8B09615623B1FC7A00EC2F6A /* SeeAudio.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeeAudio.m; sourceTree = "<group>"; };
+		8BBB951A23B3258E00B4005F /* whenImissYou.m4a */ = {isa = PBXFileReference; lastKnownFileType = file; path = whenImissYou.m4a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -61,6 +68,8 @@
 		8B09613923B1F96400EC2F6A /* 音频波形绘制 */ = {
 			isa = PBXGroup;
 			children = (
+				8BBB951A23B3258E00B4005F /* whenImissYou.m4a */,
+				8B09615323B1FC1400EC2F6A /* whenImissYou.mp3 */,
 				8B09613A23B1F96400EC2F6A /* AppDelegate.h */,
 				8B09613B23B1F96400EC2F6A /* AppDelegate.m */,
 				8B09613D23B1F96400EC2F6A /* SceneDelegate.h */,
@@ -72,6 +81,8 @@
 				8B09614823B1F96500EC2F6A /* LaunchScreen.storyboard */,
 				8B09614B23B1F96500EC2F6A /* Info.plist */,
 				8B09614C23B1F96500EC2F6A /* main.m */,
+				8B09615523B1FC7A00EC2F6A /* SeeAudio.h */,
+				8B09615623B1FC7A00EC2F6A /* SeeAudio.m */,
 			);
 			path = "音频波形绘制";
 			sourceTree = "<group>";
@@ -133,8 +144,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8BBB951B23B3258E00B4005F /* whenImissYou.m4a in Resources */,
 				8B09614A23B1F96500EC2F6A /* LaunchScreen.storyboard in Resources */,
 				8B09614723B1F96500EC2F6A /* Assets.xcassets in Resources */,
+				8B09615423B1FC1400EC2F6A /* whenImissYou.mp3 in Resources */,
 				8B09614523B1F96400EC2F6A /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -149,6 +162,7 @@
 				8B09614223B1F96400EC2F6A /* ViewController.m in Sources */,
 				8B09613C23B1F96400EC2F6A /* AppDelegate.m in Sources */,
 				8B09614D23B1F96500EC2F6A /* main.m in Sources */,
+				8B09615723B1FC7A00EC2F6A /* SeeAudio.m in Sources */,
 				8B09613F23B1F96400EC2F6A /* SceneDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -292,6 +306,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 8C3CUAZLUJ;
 				INFOPLIST_FILE = "音频波形绘制/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -309,6 +324,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 8C3CUAZLUJ;
 				INFOPLIST_FILE = "音频波形绘制/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

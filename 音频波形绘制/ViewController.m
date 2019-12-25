@@ -7,7 +7,7 @@
 //
 
 #import "ViewController.h"
-
+#import "SeeAudio.h"
 @interface ViewController ()
 
 @end
@@ -16,7 +16,9 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view.
+    self.view.backgroundColor = UIColor.whiteColor;
+    SeeAudio *seeAu = [[SeeAudio alloc] initWithFrame:self.view.bounds];
+    [self.view addSubview:seeAu];
 }
 
 
