@@ -11,7 +11,7 @@
 #import <stdlib.h>
 #define noiseFloor (-50.0)
 #define decibel(amplitude) (20.0 * log10(fabsf(amplitude)/32767.0))
-#define minMaxX(x,mn,mx) (x<=mn?mn:(x>=mx?mx:x))
+#define minMaxX(x,y,z) (x<=y?y:(x>=z?z:x))
 
 @interface SeeAudio ()
 {
@@ -49,6 +49,7 @@
     NSMutableData *fullSongData;
     int noisyFloot;
     CGFloat workDeskWidth;
+    int allTime;
 }
 @end
 
@@ -67,10 +68,10 @@
     targetOverDraw = 1;
     tickHeight = 40;
     noisyFloot = -50;
-    workDeskWidth = 5000;
+    workDeskWidth = 0;
     
     
-    asset = [[AVURLAsset alloc]initWithURL:[[NSBundle mainBundle] URLForResource:@"whenImissYou" withExtension:@"m4a"] options:nil];
+    asset = [[AVURLAsset alloc]initWithURL:[[NSBundle mainBundle] URLForResource:@"whenImissYou" withExtension:@"mp3"] options:nil];
     imageView.image =nil;
     totalSamples = asset.duration.value;
     AVPlayerItem *item = [AVPlayerItem playerItemWithAsset:asset];
@@ -79,6 +80,8 @@
     
     NSLog(@"totalSamples=%lld",totalSamples);
     NSLog(@"时间标尺-timescale=%d",asset.duration.timescale);
+    allTime = (int)asset.duration.value/asset.duration.timescale;
+    workDeskWidth = 20 * allTime;
     
     
     [self renderPNGAudioPictogramLogForAsset:asset done:^(UIImage *image, UIImage *selectedImage) {
@@ -95,7 +98,7 @@
                                       done:(void(^)(UIImage *image, UIImage *selectedImage))done
 {
     // TODO: break out subsampling code
-    NSLog(@"self.frame.size.with:%f",self.frame.size.width);
+    NSLog(@"self.frame.size.with:%f",[UIScreen mainScreen].scale);
     CGFloat widthInPixels =  workDeskWidth * [UIScreen mainScreen].scale;
     CGFloat heightInPixels = (self.frame.size.height) * [UIScreen mainScreen].scale;
     
@@ -144,7 +147,7 @@
     //    }
     //    allSongSamples = [[NSMutableData alloc] initWithCapacity:self.totalSamples];
     
-    fullSongData = [[NSMutableData alloc] initWithCapacity:totalSamples/downsampleFactor*2]; // 16-bit samples
+    fullSongData = [[NSMutableData alloc] initWithCapacity:(unsigned long int)totalSamples/downsampleFactor*2]; // 16-bit samples
     [reader startReading];
     
     while (reader.status == AVAssetReaderStatusReading) {
@@ -161,6 +164,7 @@
             // [allSongSamples appendBytes:data.mutableBytes length:bufferLength];
             
             SInt16 *samples = (SInt16 *)data.mutableBytes;
+            // 16 = [8][8],两位表示一个fream
             long sampleCount = bufferLength / bytesPerInputSample;
             for (int i=0; i<sampleCount; i++) {
                 Float32 sample = (Float32) *samples++;
@@ -243,12 +247,30 @@
         if(!sample) { NSLog(@"wrong wrong------"); break;}
         float pixels = (sample - noisyFloot) * sampleAdjustmentFactor;
         
-        NSLog(@"bitHeight=%f",pixels);
+//        NSLog(@"bitHeight=%f",pixels);
         
         CGContextMoveToPoint(context, intSample, centerLeft-pixels);
         CGContextAddLineToPoint(context, intSample, centerLeft+pixels);
         CGContextStrokePath(context);
+       
+            
+        
     }
+    
+    int oneTime = (workDeskWidth*[UIScreen mainScreen].scale)/allTime;
+    CGContextSetLineWidth(context, 4.0);
+    CGContextSetStrokeColorWithColor(context, UIColor.blackColor.CGColor);
+    for (int time = 0; time < allTime; time++) {
+         CGContextMoveToPoint(context, time*oneTime,300);
+         CGContextAddLineToPoint(context, time*oneTime,350);
+         CGContextStrokePath(context);
+        
+      
+        NSDictionary *dict  =@{NSFontAttributeName:[UIFont systemFontOfSize:50] };
+        [[NSString stringWithFormat:@"%d",time] drawAtPoint:CGPointMake(time*oneTime, 400) withAttributes:dict];
+        
+    }
+    
     
     //draw line
     CGContextSetStrokeColorWithColor(context, plotChannelOneColor);
