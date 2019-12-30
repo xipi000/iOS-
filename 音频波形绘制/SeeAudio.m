@@ -10,9 +10,20 @@
 #import <AVFoundation/AVFoundation.h>
 #import <stdlib.h>
 #define noiseFloor (-50.0)
-#define decibel(amplitude) (20.0 * log10(fabsf(amplitude)/32767.0))
-#define minMaxX(x,y,z) (x<=y?y:(x>=z?z:x))
-
+#define decibel(amplitude) (20 * log10( fabsf(amplitude)/32767.0 )) //转换为[0 - 100]
+#define minMaxX(x,mn,mx) (x<=mn?mn:(x>=mx?mx:x)) //(x<=noiseFloor?noiseFloor:(x>=0?0:x)
+/*
+ if(x<=-50){
+    return -50;
+ }else{
+     if(x>=0){
+         return 0;
+    }else{
+       return x;
+   }
+ }
+ 
+ */
 @interface SeeAudio ()
 {
     /*
@@ -103,12 +114,16 @@
     CGFloat heightInPixels = (self.frame.size.height) * [UIScreen mainScreen].scale;
     
     NSError *error = nil;
+    //创建多媒体阅读器
     AVAssetReader *reader = [[AVAssetReader alloc] initWithAsset:songAsset error:&error];
-    AVAssetTrack *songTrack = [songAsset.tracks objectAtIndex:0];
+    //筛选出audio
+    NSArray *audioTracks = [asset tracksWithMediaType:AVMediaTypeAudio];
+    //获取其中的一个音频轨道
+    AVAssetTrack *songTrack =[audioTracks objectAtIndex:0];
+    //CMTime  时间 = value / 时间基
     duration = songAsset.duration.value/songAsset.duration.timescale;
     
     NSLog(@"duration=%f",duration);
-    
     NSDictionary *outputSettingsDict = [[NSDictionary alloc] initWithObjectsAndKeys:
                                         [NSNumber numberWithInt:kAudioFormatLinearPCM],AVFormatIDKey,
                                         //     [NSNumber numberWithInt:44100.0],AVSampleRateKey, /*Not Supported*/
@@ -118,6 +133,7 @@
                                         [NSNumber numberWithBool:NO],AVLinearPCMIsFloatKey,
                                         [NSNumber numberWithBool:NO],AVLinearPCMIsNonInterleaved,
                                         nil];
+    // You can read the samples in the track in their stored format, or you can convert them to a different format.
     AVAssetReaderTrackOutput *output = [[AVAssetReaderTrackOutput alloc] initWithTrack:songTrack outputSettings:outputSettingsDict];
     [reader addOutput:output];
    
@@ -126,6 +142,7 @@
     NSArray *formatDesc = songTrack.formatDescriptions;
     for(unsigned int i = 0; i < [formatDesc count]; ++i) {
         CMAudioFormatDescriptionRef item = (__bridge CMAudioFormatDescriptionRef)[formatDesc objectAtIndex:i];
+        //获取多媒体描述
         const AudioStreamBasicDescription* fmtDesc = CMAudioFormatDescriptionGetStreamBasicDescription(item);
         if (!fmtDesc) return; //!
         channelCount = fmtDesc->mChannelsPerFrame;
@@ -150,35 +167,61 @@
     fullSongData = [[NSMutableData alloc] initWithCapacity:(unsigned long int)totalSamples/downsampleFactor*2]; // 16-bit samples
     [reader startReading];
     
+   /*
+   CMVideoFormatDesc：video的格式，包括宽高、颜色空间、编码格式、SPS、PPS
+   CVPixelBuffer:包含未压缩的像素格式，宽高
+   CMBlockBuffer:未压缩的的图像数据
+   CMSampleBuufer:存放一个或多个压缩或未压缩的媒体文件
+    */
     while (reader.status == AVAssetReaderStatusReading) {
         AVAssetReaderTrackOutput * trackOutput = (AVAssetReaderTrackOutput *)[reader.outputs objectAtIndex:0];
+        //CMSampleBufferRef:这是一个包含零个或多个解码后（未解码）特定媒体类型的样本（音频，视频，多路复用等）
         CMSampleBufferRef sampleBufferRef = [trackOutput copyNextSampleBuffer];
         if (sampleBufferRef) {
+            //未压缩的的图像数据
             CMBlockBufferRef blockBufferRef = CMSampleBufferGetDataBuffer(sampleBufferRef);
             size_t bufferLength = CMBlockBufferGetDataLength(blockBufferRef);
             NSMutableData * data = [NSMutableData dataWithLength:bufferLength];
+            /*
+             @param    theSourceBuffer
+             @param    offsetToData
+             @param    dataLength
+             @param    destination
+             */
             CMBlockBufferCopyDataBytes(blockBufferRef, 0, bufferLength, data.mutableBytes);
             
             double RMS;
             RMS = 0;
             // [allSongSamples appendBytes:data.mutableBytes length:bufferLength];
-            
+            int tmp = 0;
             SInt16 *samples = (SInt16 *)data.mutableBytes;
             // 16 = [8][8],两位表示一个fream
             long sampleCount = bufferLength / bytesPerInputSample;
             for (int i=0; i<sampleCount; i++) {
-                Float32 sample = (Float32) *samples++;
+                Float32 sample = (Float32) *samples++;//获取一帧一帧的采样
+               
                 //                [allSongSamples appendBytes:&sample length:sizeof(sample)];
-                sample = decibel(sample);
-                sample = minMaxX(sample,noiseFloor,0);
+               sample = decibel(sample);
+               sample = minMaxX(sample,noiseFloor,0);
                 tally += sample; // Should be RMS?
                 //                adPercent=sample;///32768.0f;
                 //                RMS += adPercent*adPercent;
                 
+                //获取多个声道中的一个声道数据
                 for (int j=1; j<channelCount; j++)
                     samples++;
+                
                 tallyCount++;
                 
+                if (tmp <= 1) {
+                    printf("[%f] ",sample);
+                    tmp++;
+                }
+                
+                
+                
+                
+             
                 if (tallyCount == downsampleFactor) {
                     sample = tally / tallyCount;
                     //                    RMS = sqrt(RMS / tallyCount);
@@ -189,7 +232,6 @@
                     tally = 0;
                     tallyCount = 0;
                     RMS = 0;
-                    
                     outSamples++;
                 }
             }
@@ -271,7 +313,7 @@
         
     }
     
-    
+   
     //draw line
     CGContextSetStrokeColorWithColor(context, plotChannelOneColor);
     float pixels = (yellowLine - noisyFloot) * sampleAdjustmentFactor;
