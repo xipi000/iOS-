@@ -91,8 +91,9 @@
     
     NSLog(@"totalSamples=%lld",totalSamples);
     NSLog(@"时间标尺-timescale=%d",asset.duration.timescale);
-    allTime = (int)asset.duration.value/asset.duration.timescale;
+    allTime = (int)asset.duration.value/asset.duration.timescale; 
     workDeskWidth = 20 * allTime;
+    
     
     
     [self renderPNGAudioPictogramLogForAsset:asset done:^(UIImage *image, UIImage *selectedImage) {
@@ -122,6 +123,7 @@
     AVAssetTrack *songTrack =[audioTracks objectAtIndex:0];
     //CMTime  时间 = value / 时间基
     duration = songAsset.duration.value/songAsset.duration.timescale;
+    int32_t timescale = asset.duration.timescale;
     
     NSLog(@"duration=%f",duration);
     NSDictionary *outputSettingsDict = [[NSDictionary alloc] initWithObjectsAndKeys:
@@ -222,11 +224,11 @@
                 
                 
              
-                if (tallyCount == downsampleFactor) {
+                if (tallyCount == (timescale/10)) {//把帧加起来求平均值，因为帧数太多
                     sample = tally / tallyCount;
                     //                    RMS = sqrt(RMS / tallyCount);
                     //                    sample = RMS;
-                    maximum = maximum > sample ? maximum : sample;
+                    maximum = maximum > sample ? maximum : sample;//求最大的平均值
                     int sampleLen = sizeof(sample);
                     [fullSongData appendBytes:&sample length:sampleLen];
                     tally = 0;
