@@ -14,16 +14,16 @@
 #define minMaxX(x,mn,mx) (x<=mn?mn:(x>=mx?mx:x)) //(x<=noiseFloor?noiseFloor:(x>=0?0:x)
 #define spaceX 4
 #define KimageHeight 200
-#define padding 10
+#define padding 20
 /*
  if(x<=-50){
-    return -50;
+ return -50;
  }else{
-     if(x>=0){
-         return 0;
-    }else{
-       return x;
-   }
+ if(x>=0){
+ return 0;
+ }else{
+ return x;
+ }
  }
  
  */
@@ -81,11 +81,11 @@
     targetOverDraw = 1;
     tickHeight = 40;
     noisyFloot = -50;
-
+    
     
     
     asset = [[AVURLAsset alloc]initWithURL:
-             [[NSBundle mainBundle] URLForResource:@"whenImissYou" withExtension:@"mp3"] options:nil];
+             [[NSBundle mainBundle] URLForResource:@"whenImissYou2" withExtension:@"m4a"] options:nil];
     imageView.image =nil;
     totalSamples = asset.duration.value;
     AVPlayerItem *item = [AVPlayerItem playerItemWithAsset:asset];
@@ -94,8 +94,8 @@
     
     NSLog(@"totalSamples=%lld",totalSamples);
     NSLog(@"时间标尺-timescale=%d",asset.duration.timescale);
-    allTime = (int)asset.duration.value/asset.duration.timescale; 
-   
+    allTime = (int)asset.duration.value/asset.duration.timescale;
+    
     
     
     
@@ -135,8 +135,8 @@
     // You can read the samples in the track in their stored format, or you can convert them to a different format.
     AVAssetReaderTrackOutput *output = [[AVAssetReaderTrackOutput alloc] initWithTrack:songTrack outputSettings:outputSettingsDict];
     [reader addOutput:output];
-   
-
+    
+    
     
     NSArray *formatDesc = songTrack.formatDescriptions;
     for(unsigned int i = 0; i < [formatDesc count]; ++i) {
@@ -155,17 +155,17 @@
     if(fullSongData){
         fullSongData = nil;
     }
-   
+    
     
     fullSongData = [[NSMutableData alloc] init];
     [reader startReading];
     
-   /*
-   CMVideoFormatDesc：video的格式，包括宽高、颜色空间、编码格式、SPS、PPS
-   CVPixelBuffer:包含未压缩的像素格式，宽高
-   CMBlockBuffer:未压缩的的图像数据
-   CMSampleBuufer:存放一个或多个压缩或未压缩的媒体文件
-    */
+    /*
+     CMVideoFormatDesc：video的格式，包括宽高、颜色空间、编码格式、SPS、PPS
+     CVPixelBuffer:包含未压缩的像素格式，宽高
+     CMBlockBuffer:未压缩的的图像数据
+     CMSampleBuufer:存放一个或多个压缩或未压缩的媒体文件
+     */
     while (reader.status == AVAssetReaderStatusReading) {
         AVAssetReaderTrackOutput * trackOutput = (AVAssetReaderTrackOutput *)[reader.outputs objectAtIndex:0];
         //CMSampleBufferRef:这是一个包含零个或多个解码后（未解码）特定媒体类型的样本（音频，视频，多路复用等）
@@ -183,16 +183,16 @@
              */
             CMBlockBufferCopyDataBytes(blockBufferRef, 0, bufferLength, data.mutableBytes);
             
-           
+            
             SInt16 *samples = (SInt16 *)data.mutableBytes;
             // 16 = [8][8],两位表示一个fream
             long sampleCount = bufferLength / bytesPerInputSample;
             for (int i=0; i<sampleCount; i++) {
-               
-              Float32 sample = (Float32) *samples++;//获取一帧一帧的采样
+                
+                Float32 sample = (Float32) *samples++;//获取一帧一帧的采样
                 //求出50以内的值，最大值50
-               sample = decibel(sample);
-               sample = minMaxX(sample,noiseFloor,0);
+                sample = decibel(sample);
+                sample = minMaxX(sample,noiseFloor,0);
                 tally += sample;
                 //获取多个声道中的一个声道数据
                 for (int j=1; j<channelCount; j++)
@@ -201,13 +201,13 @@
                 tallyCount++;
                 
                 /*
-                   把帧加起来求平均值，因为帧数太多
-                   从音频中获取采样率为，1s，44100
-                   份为10份，一份为44100/10 = 4410，
-                   把这4410加起来求平均值，然后放入缓冲区，即一个条形的高度
+                 把帧加起来求平均值，因为帧数太多
+                 从音频中获取采样率为，1s，44100
+                 份为10份，一份为44100/10 = 4410，
+                 把这4410加起来求平均值，然后放入缓冲区，即一个条形的高度
                  */
                 if (tallyCount == (timescale/10)) {
-                  
+                    
                     sample = tally / tallyCount;
                     maximum = maximum > sample ? maximum : sample;//求最大的平均值
                     int sampleLen = sizeof(sample);
@@ -223,67 +223,91 @@
         }
     }
     //每一秒画 10 个条形图
-    NSInteger drowCount = duration*10*spaceX;
+    NSInteger drowCount = duration*10+1;
     
     if (reader.status == AVAssetReaderStatusCompleted){
         NSLog(@"FDWaveformView: start rendering PNG W= %f", outSamples);
         [self plotLogGraph:(Float32 *)fullSongData.bytes
               maximumValue:maximum
-               drowCount:drowCount
+                 drowCount:drowCount
                       done:done];
     }
-   
+    
     
 }
 
 - (void) plotLogGraph:(Float32 *) samples
          maximumValue:(Float32) normalizeMax
-          drowCount:(NSInteger)drowCount
+            drowCount:(NSInteger)drowCount
                  done:(void(^)(UIImage *image, UIImage *selectedImage,NSInteger imageWidth))done
 {
     // TODO: switch to a synchronous function that paints onto a given context
-   
+    
     /*
-       控制振幅在一定范围内
-       KimageHeight = 最大振幅*2*k+padding,k 比例系数，padding，内边距。
+     控制振幅在一定范围内
+     KimageHeight = 最大振幅*2*k+padding,k 比例系数，padding，内边距。
      - KimageHeight = ((fabsf(normalizeMax)-50)*k - padding)*2;
-    */
+     */
     CGFloat k = (((-KimageHeight)/2)+padding)/(fabsf(normalizeMax)-50);
     
-    CGSize imageSize = CGSizeMake(drowCount, KimageHeight);
+    CGSize imageSize = CGSizeMake(drowCount*spaceX, KimageHeight);
     // 0.0 表示不做任何缩放，必须这初始化，其他方法会造成颜色变淡
     UIGraphicsBeginImageContextWithOptions(imageSize,YES,0.0); // this is leaking memory?
     CGContextRef context = UIGraphicsGetCurrentContext();
-    CGContextSetAlpha(context,1.0);
-    CGContextSetLineWidth(context, 1.0);
-    CGContextSetStrokeColorWithColor(context, UIColor.whiteColor.CGColor);
-
+    
+    
     int imageCentreY = KimageHeight/2;
     int offsetX = 0;
+    int secend = 0;
+    int time = 0;
+    int start = -1;
     for (NSInteger intSample=0; intSample<drowCount; intSample++) {
         Float32 sample = *(samples++);
         if(!sample) { NSLog(@"wrong wrong------"); break;}
         int offsetY = (fabsf(sample)-50)*k;
-        printf("%d  ",offsetY);
+//        printf("%d  ",offsetY);
+        CGContextSetAlpha(context,1.0);
+        CGContextSetLineWidth(context, 1.0);
+        CGContextSetStrokeColorWithColor(context, UIColor.whiteColor.CGColor);
         CGContextMoveToPoint(context, offsetX, imageCentreY-offsetY);
         CGContextAddLineToPoint(context, offsetX, imageCentreY+offsetY);
         CGContextStrokePath(context);
+        
+        //时间刻度和时间,一个豆腐砍9刀分为10份
+        if (secend == 9 || start == -1) {
+            start = 0;
+            
+            CGContextSetAlpha(context,1.0);
+            CGContextSetLineWidth(context, 1.0);
+            CGContextSetStrokeColorWithColor(context, UIColor.whiteColor.CGColor);
+            CGContextMoveToPoint(context, offsetX,0);
+            CGContextAddLineToPoint(context, offsetX,10);
+            CGContextStrokePath(context);
+            secend = 0;
+            
+            
+            CGContextSetLineWidth(context, 1.0);
+            CGContextSetStrokeColorWithColor(context, UIColor.whiteColor.CGColor);
+            CGContextStrokePath(context);
+            NSDictionary *dict  =@{NSFontAttributeName:[UIFont systemFontOfSize:8],
+                                   NSForegroundColorAttributeName:[UIColor whiteColor]};
+            NSString *timeStr = [NSString stringWithFormat:@"%.2d:%.2d",time/60,time%60];
+            [timeStr drawAtPoint:CGPointMake(offsetX-5,12) withAttributes:dict];
+            time++;
+        }else{
+            CGContextSetAlpha(context,1.0);
+            CGContextSetLineWidth(context, 0.5);
+            CGContextSetStrokeColorWithColor(context, UIColor.whiteColor.CGColor);
+            CGContextMoveToPoint(context, offsetX,0);
+            CGContextAddLineToPoint(context, offsetX,6);
+            CGContextStrokePath(context);
+            secend++;
+        }
+        
         offsetX+=spaceX;
     }
     
-//    int oneTime = (workDeskWidth*[UIScreen mainScreen].scale)/allTime;
-//    CGContextSetLineWidth(context, 1.0);
-//    CGContextSetStrokeColorWithColor(context, UIColor.blackColor.CGColor);
-//    for (int time = 0; time < allTime; time++) {
-//         CGContextMoveToPoint(context, time*oneTime,300);
-//         CGContextAddLineToPoint(context, time*oneTime,350);
-//         CGContextStrokePath(context);
-//        NSDictionary *dict  =@{NSFontAttributeName:[UIFont systemFontOfSize:50] };
-//        [[NSString stringWithFormat:@"%d",time] drawAtPoint:CGPointMake(time*oneTime, 400) withAttributes:dict];
-//
-//    }
     
-   
     //draw line
     UIBezierPath *line = [UIBezierPath bezierPath];
     [line moveToPoint:CGPointMake(0, 0)];
@@ -294,16 +318,16 @@
     [line moveToPoint:CGPointMake(0, KimageHeight/2)];
     [line addLineToPoint:CGPointMake(imageSize.width, KimageHeight/2)];
     [line setLineWidth:1.0];
-//    [line stroke];
-
+    //    [line stroke];
+    
     [line moveToPoint:CGPointMake(0, KimageHeight)];
     [line addLineToPoint:CGPointMake(imageSize.width, KimageHeight)];
     [line setLineWidth:1.0];
-//    [line stroke];
-   
+    //    [line stroke];
+    
     
     UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
-    done(image, nil,drowCount);
+    done(image, nil,drowCount*spaceX);
 }
 @end
