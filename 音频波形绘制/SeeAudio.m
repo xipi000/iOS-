@@ -14,7 +14,8 @@
 #define minMaxX(x,mn,mx) (x<=mn?mn:(x>=mx?mx:x)) //(x<=noiseFloor?noiseFloor:(x>=0?0:x)
 #define spaceX 4
 #define KimageHeight 200
-#define padding 20
+#define padding 70
+#define halfScreenW ([UIScreen mainScreen].bounds.size.width/2)
 /*
  if(x<=-50){
  return -50;
@@ -243,6 +244,19 @@
 {
     // TODO: switch to a synchronous function that paints onto a given context
     
+    
+    
+    CGSize imageSize = CGSizeMake(drowCount*spaceX+halfScreenW*2, KimageHeight);
+    // 0.0 表示不做任何缩放，必须这初始化，其他方法会造成颜色变淡
+    UIGraphicsBeginImageContextWithOptions(imageSize,YES,0.0); // this is leaking memory?
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    
+    
+    int imageCentreY = KimageHeight/2;
+    int offsetX = halfScreenW;
+    int secend = 0;
+    int time = 0;
+    int start = -1;
     /*
      控制振幅在一定范围内
      KimageHeight = 最大振幅*2*k+padding,k 比例系数，padding，内边距。
@@ -250,22 +264,11 @@
      */
     CGFloat k = (((-KimageHeight)/2)+padding)/(fabsf(normalizeMax)-50);
     
-    CGSize imageSize = CGSizeMake(drowCount*spaceX, KimageHeight);
-    // 0.0 表示不做任何缩放，必须这初始化，其他方法会造成颜色变淡
-    UIGraphicsBeginImageContextWithOptions(imageSize,YES,0.0); // this is leaking memory?
-    CGContextRef context = UIGraphicsGetCurrentContext();
-    
-    
-    int imageCentreY = KimageHeight/2;
-    int offsetX = 0;
-    int secend = 0;
-    int time = 0;
-    int start = -1;
     for (NSInteger intSample=0; intSample<drowCount; intSample++) {
         Float32 sample = *(samples++);
         if(!sample) { NSLog(@"wrong wrong------"); break;}
         int offsetY = (fabsf(sample)-50)*k;
-//        printf("%d  ",offsetY);
+        //        printf("%d  ",offsetY);
         CGContextSetAlpha(context,1.0);
         CGContextSetLineWidth(context, 1.0);
         CGContextSetStrokeColorWithColor(context, UIColor.whiteColor.CGColor);
