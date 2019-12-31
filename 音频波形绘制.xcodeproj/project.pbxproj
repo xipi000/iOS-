@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		8B092E0A23BB3927000EA288 /* whenImissYou2.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 8B092E0923BB3927000EA288 /* whenImissYou2.m4a */; };
+		8B092E0D23BB4AF4000EA288 /* SCPlayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 8B092E0B23BB4AF4000EA288 /* SCPlayer.m */; };
 		8B09613C23B1F96400EC2F6A /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 8B09613B23B1F96400EC2F6A /* AppDelegate.m */; };
 		8B09613F23B1F96400EC2F6A /* SceneDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 8B09613E23B1F96400EC2F6A /* SceneDelegate.m */; };
 		8B09614223B1F96400EC2F6A /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 8B09614123B1F96400EC2F6A /* ViewController.m */; };
@@ -22,6 +23,8 @@
 
 /* Begin PBXFileReference section */
 		8B092E0923BB3927000EA288 /* whenImissYou2.m4a */ = {isa = PBXFileReference; lastKnownFileType = file; path = whenImissYou2.m4a; sourceTree = "<group>"; };
+		8B092E0B23BB4AF4000EA288 /* SCPlayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SCPlayer.m; sourceTree = "<group>"; };
+		8B092E0C23BB4AF4000EA288 /* SCPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SCPlayer.h; sourceTree = "<group>"; };
 		8B09613723B1F96400EC2F6A /* 音频波形绘制.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "音频波形绘制.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		8B09613A23B1F96400EC2F6A /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		8B09613B23B1F96400EC2F6A /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -51,6 +54,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		8B092E0E23BB4EF7000EA288 /* weaveFormate */ = {
+			isa = PBXGroup;
+			children = (
+				8B09614023B1F96400EC2F6A /* ViewController.h */,
+				8B09614123B1F96400EC2F6A /* ViewController.m */,
+				8B09615523B1FC7A00EC2F6A /* SeeAudio.h */,
+				8B09615623B1FC7A00EC2F6A /* SeeAudio.m */,
+				8B092E0C23BB4AF4000EA288 /* SCPlayer.h */,
+				8B092E0B23BB4AF4000EA288 /* SCPlayer.m */,
+			);
+			path = weaveFormate;
+			sourceTree = "<group>";
+		};
 		8B09612E23B1F96400EC2F6A = {
 			isa = PBXGroup;
 			children = (
@@ -70,6 +86,7 @@
 		8B09613923B1F96400EC2F6A /* 音频波形绘制 */ = {
 			isa = PBXGroup;
 			children = (
+				8B092E0E23BB4EF7000EA288 /* weaveFormate */,
 				8B092E0923BB3927000EA288 /* whenImissYou2.m4a */,
 				8BBB951A23B3258E00B4005F /* whenImissYou.m4a */,
 				8B09615323B1FC1400EC2F6A /* whenImissYou.mp3 */,
@@ -77,15 +94,11 @@
 				8B09613B23B1F96400EC2F6A /* AppDelegate.m */,
 				8B09613D23B1F96400EC2F6A /* SceneDelegate.h */,
 				8B09613E23B1F96400EC2F6A /* SceneDelegate.m */,
-				8B09614023B1F96400EC2F6A /* ViewController.h */,
-				8B09614123B1F96400EC2F6A /* ViewController.m */,
 				8B09614323B1F96400EC2F6A /* Main.storyboard */,
 				8B09614623B1F96500EC2F6A /* Assets.xcassets */,
 				8B09614823B1F96500EC2F6A /* LaunchScreen.storyboard */,
 				8B09614B23B1F96500EC2F6A /* Info.plist */,
 				8B09614C23B1F96500EC2F6A /* main.m */,
-				8B09615523B1FC7A00EC2F6A /* SeeAudio.h */,
-				8B09615623B1FC7A00EC2F6A /* SeeAudio.m */,
 			);
 			path = "音频波形绘制";
 			sourceTree = "<group>";
@@ -167,6 +180,7 @@
 				8B09613C23B1F96400EC2F6A /* AppDelegate.m in Sources */,
 				8B09614D23B1F96500EC2F6A /* main.m in Sources */,
 				8B09615723B1FC7A00EC2F6A /* SeeAudio.m in Sources */,
+				8B092E0D23BB4AF4000EA288 /* SCPlayer.m in Sources */,
 				8B09613F23B1F96400EC2F6A /* SceneDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

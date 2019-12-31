@@ -7,7 +7,6 @@
 //
 
 #import "SeeAudio.h"
-#import <AVFoundation/AVFoundation.h>
 #import <stdlib.h>
 #define noiseFloor (-50.0)
 #define decibel(amplitude) (20 * log10( fabsf(amplitude)/32767.0 )) //转换为[0 - 100]
@@ -52,7 +51,7 @@
      */
     int64_t totalSamples; //时间标尺下的总时长（CMTime value）（timescale 即把1s分为多少份 ）
     
-    AVURLAsset *asset;
+//    AVURLAsset *asset;
     UIImageView *imageView;
     AVPlayer *p;
     
@@ -63,7 +62,6 @@
     Float32 maximum;
     NSMutableData *fullSongData;
     int noisyFloot;
-    int allTime;
 }
 @end
 
@@ -73,57 +71,23 @@
 -(instancetype)initWithFrame:(CGRect)frame
 {
     self = [super initWithFrame:frame];
-    [self tese1];
+   
     return self;
 }
--(void)tese1
-{
-    
-    targetOverDraw = 1;
-    tickHeight = 40;
-    noisyFloot = -50;
-    
-    
-    
-    asset = [[AVURLAsset alloc]initWithURL:
-             [[NSBundle mainBundle] URLForResource:@"whenImissYou2" withExtension:@"m4a"] options:nil];
-    imageView.image =nil;
-    totalSamples = asset.duration.value;
-    AVPlayerItem *item = [AVPlayerItem playerItemWithAsset:asset];
-    p = [[AVPlayer  alloc] initWithPlayerItem:item];
-    [p play];
-    
-    NSLog(@"totalSamples=%lld",totalSamples);
-    NSLog(@"时间标尺-timescale=%d",asset.duration.timescale);
-    allTime = (int)asset.duration.value/asset.duration.timescale;
-    
-    
-    
-    
-    [self renderPNGAudioPictogramLogForAsset:asset done:^(UIImage *image, UIImage *selectedImage,NSInteger imageWidth) {
-        UIScrollView *scrv = [[UIScrollView alloc] initWithFrame:self.bounds];
-        [scrv setContentSize:CGSizeMake(imageWidth, KimageHeight)];
-        [self addSubview:scrv];
-        UIImageView *imgv = [[UIImageView alloc] initWithFrame:CGRectMake(0, 100, imageWidth, KimageHeight)];
-        imgv.image = image;
-        [scrv addSubview:imgv];
-    }];
-    
-}
 - (void)renderPNGAudioPictogramLogForAsset:(AVURLAsset *)songAsset
-                                      done:(void(^)(UIImage *image, UIImage *selectedImage,NSInteger imageWidth))done
+                                      done:(void(^)(UIImage *image,NSInteger imageWidth))done
 {
     // TODO: break out subsampling code
     NSError *error = nil;
     //创建多媒体阅读器
     AVAssetReader *reader = [[AVAssetReader alloc] initWithAsset:songAsset error:&error];
     //筛选出audio
-    NSArray *audioTracks = [asset tracksWithMediaType:AVMediaTypeAudio];
+    NSArray *audioTracks = [songAsset tracksWithMediaType:AVMediaTypeAudio];
     //获取其中的一个音频轨道
     AVAssetTrack *songTrack =[audioTracks objectAtIndex:0];
     //CMTime  时间 = value / 时间基
     duration = songAsset.duration.value/songAsset.duration.timescale;
-    int32_t timescale = asset.duration.timescale;
+    int32_t timescale = songAsset.duration.timescale;
     
     NSLog(@"duration=%f",duration);
     NSDictionary *outputSettingsDict = [[NSDictionary alloc] initWithObjectsAndKeys:
@@ -240,7 +204,7 @@
 - (void) plotLogGraph:(Float32 *) samples
          maximumValue:(Float32) normalizeMax
             drowCount:(NSInteger)drowCount
-                 done:(void(^)(UIImage *image, UIImage *selectedImage,NSInteger imageWidth))done
+                 done:(void(^)(UIImage *image,NSInteger imageWidth))done
 {
     // TODO: switch to a synchronous function that paints onto a given context
     
@@ -331,6 +295,6 @@
     
     UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
-    done(image, nil,drowCount*spaceX);
+    done(image,drowCount*spaceX);
 }
 @end
