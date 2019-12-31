@@ -84,7 +84,8 @@
 
     
     
-    asset = [[AVURLAsset alloc]initWithURL:[[NSBundle mainBundle] URLForResource:@"whenImissYou" withExtension:@"m4a"] options:nil];
+    asset = [[AVURLAsset alloc]initWithURL:
+             [[NSBundle mainBundle] URLForResource:@"whenImissYou" withExtension:@"mp3"] options:nil];
     imageView.image =nil;
     totalSamples = asset.duration.value;
     AVPlayerItem *item = [AVPlayerItem playerItemWithAsset:asset];
@@ -189,7 +190,7 @@
             for (int i=0; i<sampleCount; i++) {
                
               Float32 sample = (Float32) *samples++;//获取一帧一帧的采样
-                //求出50以内的值
+                //求出50以内的值，最大值50
                sample = decibel(sample);
                sample = minMaxX(sample,noiseFloor,0);
                 tally += sample;
