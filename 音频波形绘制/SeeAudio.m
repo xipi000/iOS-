@@ -12,7 +12,9 @@
 #define noiseFloor (-50.0)
 #define decibel(amplitude) (20 * log10( fabsf(amplitude)/32767.0 )) //转换为[0 - 100]
 #define minMaxX(x,mn,mx) (x<=mn?mn:(x>=mx?mx:x)) //(x<=noiseFloor?noiseFloor:(x>=0?0:x)
-#define spaceX 4;
+#define spaceX 4
+#define KimageHeight 200
+#define padding 10
 /*
  if(x<=-50){
     return -50;
@@ -60,7 +62,6 @@
     Float32 maximum;
     NSMutableData *fullSongData;
     int noisyFloot;
-    CGFloat workDeskWidth;
     int allTime;
 }
 @end
@@ -80,10 +81,10 @@
     targetOverDraw = 1;
     tickHeight = 40;
     noisyFloot = -50;
-    workDeskWidth = 0;
+
     
     
-    asset = [[AVURLAsset alloc]initWithURL:[[NSBundle mainBundle] URLForResource:@"whenImissYou" withExtension:@"mp3"] options:nil];
+    asset = [[AVURLAsset alloc]initWithURL:[[NSBundle mainBundle] URLForResource:@"whenImissYou" withExtension:@"m4a"] options:nil];
     imageView.image =nil;
     totalSamples = asset.duration.value;
     AVPlayerItem *item = [AVPlayerItem playerItemWithAsset:asset];
@@ -93,15 +94,15 @@
     NSLog(@"totalSamples=%lld",totalSamples);
     NSLog(@"时间标尺-timescale=%d",asset.duration.timescale);
     allTime = (int)asset.duration.value/asset.duration.timescale; 
-    workDeskWidth = 20 * allTime;
+   
     
     
     
     [self renderPNGAudioPictogramLogForAsset:asset done:^(UIImage *image, UIImage *selectedImage,NSInteger imageWidth) {
         UIScrollView *scrv = [[UIScrollView alloc] initWithFrame:self.bounds];
-        [scrv setContentSize:CGSizeMake(imageWidth, 400)];
+        [scrv setContentSize:CGSizeMake(imageWidth, KimageHeight)];
         [self addSubview:scrv];
-        UIImageView *imgv = [[UIImageView alloc] initWithFrame:CGRectMake(0, 100, imageWidth, 400)];
+        UIImageView *imgv = [[UIImageView alloc] initWithFrame:CGRectMake(0, 100, imageWidth, KimageHeight)];
         imgv.image = image;
         [scrv addSubview:imgv];
     }];
@@ -111,10 +112,6 @@
                                       done:(void(^)(UIImage *image, UIImage *selectedImage,NSInteger imageWidth))done
 {
     // TODO: break out subsampling code
-    NSLog(@"self.frame.size.with:%f",[UIScreen mainScreen].scale);
-    CGFloat widthInPixels =  workDeskWidth * [UIScreen mainScreen].scale;
-    CGFloat heightInPixels = (self.frame.size.height) * [UIScreen mainScreen].scale;
-    
     NSError *error = nil;
     //创建多媒体阅读器
     AVAssetReader *reader = [[AVAssetReader alloc] initWithAsset:songAsset error:&error];
@@ -129,8 +126,6 @@
     NSLog(@"duration=%f",duration);
     NSDictionary *outputSettingsDict = [[NSDictionary alloc] initWithObjectsAndKeys:
                                         [NSNumber numberWithInt:kAudioFormatLinearPCM],AVFormatIDKey,
-                                        //     [NSNumber numberWithInt:44100.0],AVSampleRateKey, /*Not Supported*/
-                                        //     [NSNumber numberWithInt: 2],AVNumberOfChannelsKey,    /*Not Supported*/
                                         [NSNumber numberWithInt:16],AVLinearPCMBitDepthKey,
                                         [NSNumber numberWithBool:NO],AVLinearPCMIsBigEndianKey,
                                         [NSNumber numberWithBool:NO],AVLinearPCMIsFloatKey,
@@ -156,18 +151,12 @@
     Float64 tally = 0;
     Float32 tallyCount = 0;
     Float32 outSamples = 0;
-    NSInteger downsampleFactor = totalSamples / widthInPixels;
-    downsampleFactor = downsampleFactor<1 ? 1 : downsampleFactor;
     if(fullSongData){
         fullSongData = nil;
     }
-    //    if(allSongSamples){
-    //        [allSongSamples release];
-    //        allSongSamples = nil;
-    //    }
-    //    allSongSamples = [[NSMutableData alloc] initWithCapacity:self.totalSamples];
+   
     
-    fullSongData = [[NSMutableData alloc] initWithCapacity:(unsigned long int)totalSamples/downsampleFactor*2]; // 16-bit samples
+    fullSongData = [[NSMutableData alloc] init];
     [reader startReading];
     
    /*
@@ -198,9 +187,9 @@
             // 16 = [8][8],两位表示一个fream
             long sampleCount = bufferLength / bytesPerInputSample;
             for (int i=0; i<sampleCount; i++) {
-                Float32 sample = (Float32) *samples++;//获取一帧一帧的采样
                
-                //                [allSongSamples appendBytes:&sample length:sizeof(sample)];
+              Float32 sample = (Float32) *samples++;//获取一帧一帧的采样
+                //求出50以内的值
                sample = decibel(sample);
                sample = minMaxX(sample,noiseFloor,0);
                 tally += sample;
@@ -217,8 +206,8 @@
                    把这4410加起来求平均值，然后放入缓冲区，即一个条形的高度
                  */
                 if (tallyCount == (timescale/10)) {
+                  
                     sample = tally / tallyCount;
-                                 
                     maximum = maximum > sample ? maximum : sample;//求最大的平均值
                     int sampleLen = sizeof(sample);
                     [fullSongData appendBytes:&sample length:sampleLen];
@@ -239,28 +228,28 @@
         NSLog(@"FDWaveformView: start rendering PNG W= %f", outSamples);
         [self plotLogGraph:(Float32 *)fullSongData.bytes
               maximumValue:maximum
-              mimimumValue:noiseFloor
                drowCount:drowCount
-               imageHeight:heightInPixels
                       done:done];
     }
    
     
 }
-#define yellowLine (-16.0)
-#define plotChannelOneColor [[UIColor blackColor] CGColor]
-#define waveColor [[UIColor blueColor] CGColor]
 
 - (void) plotLogGraph:(Float32 *) samples
          maximumValue:(Float32) normalizeMax
-         mimimumValue:(Float32) normalizeMin
           drowCount:(NSInteger)drowCount
-          imageHeight:(float) imageHeight
                  done:(void(^)(UIImage *image, UIImage *selectedImage,NSInteger imageWidth))done
 {
     // TODO: switch to a synchronous function that paints onto a given context
    
-    CGSize imageSize = CGSizeMake(drowCount, 400);
+    /*
+       控制振幅在一定范围内
+       KimageHeight = 最大振幅*2*k+padding,k 比例系数，padding，内边距。
+     - KimageHeight = ((fabsf(normalizeMax)-50)*k - padding)*2;
+    */
+    CGFloat k = (((-KimageHeight)/2)+padding)/(fabsf(normalizeMax)-50);
+    
+    CGSize imageSize = CGSizeMake(drowCount, KimageHeight);
     // 0.0 表示不做任何缩放，必须这初始化，其他方法会造成颜色变淡
     UIGraphicsBeginImageContextWithOptions(imageSize,YES,0.0); // this is leaking memory?
     CGContextRef context = UIGraphicsGetCurrentContext();
@@ -268,30 +257,30 @@
     CGContextSetLineWidth(context, 1.0);
     CGContextSetStrokeColorWithColor(context, UIColor.whiteColor.CGColor);
 
-    int imageCentreY = 400/2;
+    int imageCentreY = KimageHeight/2;
     int offsetX = 0;
     for (NSInteger intSample=0; intSample<drowCount; intSample++) {
         Float32 sample = *(samples++);
         if(!sample) { NSLog(@"wrong wrong------"); break;}
-        int offsetY = (fabsf(sample)-50)*2;
-
+        int offsetY = (fabsf(sample)-50)*k;
+        printf("%d  ",offsetY);
         CGContextMoveToPoint(context, offsetX, imageCentreY-offsetY);
         CGContextAddLineToPoint(context, offsetX, imageCentreY+offsetY);
         CGContextStrokePath(context);
         offsetX+=spaceX;
     }
     
-    int oneTime = (workDeskWidth*[UIScreen mainScreen].scale)/allTime;
-    CGContextSetLineWidth(context, 1.0);
-    CGContextSetStrokeColorWithColor(context, UIColor.blackColor.CGColor);
-    for (int time = 0; time < allTime; time++) {
-         CGContextMoveToPoint(context, time*oneTime,300);
-         CGContextAddLineToPoint(context, time*oneTime,350);
-         CGContextStrokePath(context);
-        NSDictionary *dict  =@{NSFontAttributeName:[UIFont systemFontOfSize:50] };
-        [[NSString stringWithFormat:@"%d",time] drawAtPoint:CGPointMake(time*oneTime, 400) withAttributes:dict];
-        
-    }
+//    int oneTime = (workDeskWidth*[UIScreen mainScreen].scale)/allTime;
+//    CGContextSetLineWidth(context, 1.0);
+//    CGContextSetStrokeColorWithColor(context, UIColor.blackColor.CGColor);
+//    for (int time = 0; time < allTime; time++) {
+//         CGContextMoveToPoint(context, time*oneTime,300);
+//         CGContextAddLineToPoint(context, time*oneTime,350);
+//         CGContextStrokePath(context);
+//        NSDictionary *dict  =@{NSFontAttributeName:[UIFont systemFontOfSize:50] };
+//        [[NSString stringWithFormat:@"%d",time] drawAtPoint:CGPointMake(time*oneTime, 400) withAttributes:dict];
+//
+//    }
     
    
     //draw line
@@ -301,15 +290,15 @@
     [line setLineWidth:1.0];
     [line stroke];
     //center line
-    [line moveToPoint:CGPointMake(0, 400/2)];
-    [line addLineToPoint:CGPointMake(imageSize.width, 400/2)];
+    [line moveToPoint:CGPointMake(0, KimageHeight/2)];
+    [line addLineToPoint:CGPointMake(imageSize.width, KimageHeight/2)];
     [line setLineWidth:1.0];
-    [line stroke];
+//    [line stroke];
 
-    [line moveToPoint:CGPointMake(0, 400)];
-    [line addLineToPoint:CGPointMake(imageSize.width, 400)];
+    [line moveToPoint:CGPointMake(0, KimageHeight)];
+    [line addLineToPoint:CGPointMake(imageSize.width, KimageHeight)];
     [line setLineWidth:1.0];
-    [line stroke];
+//    [line stroke];
    
     
     UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
