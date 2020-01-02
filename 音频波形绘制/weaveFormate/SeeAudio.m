@@ -177,7 +177,7 @@ value = 2.5 * 1000 = 2500;
         }
     }
     //每一秒画 10 个条形图
-    NSInteger drowCount = duration*10+1;
+    NSInteger drowCount = duration*10;
     
     if (reader.status == AVAssetReaderStatusCompleted){
         NSLog(@"FDWaveformView: start rendering PNG W= %f", outSamples);
@@ -217,7 +217,7 @@ value = 2.5 * 1000 = 2500;
      */
     CGFloat k = (((-KimageHeight)/2)+padding)/(fabsf(normalizeMax)-50);
     
-    for (NSInteger intSample=0; intSample<drowCount; intSample++) {
+    for (NSInteger intSample=0; intSample<=drowCount; intSample++) {
         Float32 sample = *(samples++);
         if(!sample) { NSLog(@"wrong wrong------"); break;}
         int offsetY = (fabsf(sample)-50)*k;

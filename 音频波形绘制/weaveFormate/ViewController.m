@@ -63,7 +63,7 @@ SeeAudio *seec = [[SeeAudio alloc] initWithFrame:self.view.bounds];
 }
 -(void)timeRunAndTime:(NSInteger)runTime
 {
-    
+
   //线形运动，不要缓动
   [UIView animateWithDuration:26 delay:0.0 options:UIViewAnimationOptionCurveLinear animations:^{
       [self->vv setContentOffset:CGPointMake(self->ww-screenW, 0) animated:NO];
