@@ -32,7 +32,7 @@ SeeAudio *seec = [[SeeAudio alloc] initWithFrame:self.view.bounds];
   
       
      AVURLAsset  *asset = [[AVURLAsset alloc]initWithURL:
-                 [[NSBundle mainBundle] URLForResource:@"whenImissYou" withExtension:@"m4a"] options:nil];
+                 [[NSBundle mainBundle] URLForResource:@"whenImissYou" withExtension:@"mp3"] options:nil];
         
        
         [seec renderPNGAudioPictogramLogForAsset:asset done:^(UIImage *image,NSInteger imageWidth) {
@@ -47,7 +47,7 @@ SeeAudio *seec = [[SeeAudio alloc] initWithFrame:self.view.bounds];
             
             
             SCPlayer *scp = [[SCPlayer alloc] initWithFrame:CGRectMake(0, 400, screenW, 300)];
-            [scp replaceCurrentUrl:[NSString stringWithFormat:@"%@",[[NSBundle mainBundle] URLForResource:@"whenImissYou" withExtension:@"m4a"]]];
+            [scp replaceCurrentUrl:[NSString stringWithFormat:@"%@",[[NSBundle mainBundle] URLForResource:@"whenImissYou" withExtension:@"mp3"]]];
             scp.delegate = self;
             [self.view addSubview:scp];
             
@@ -65,7 +65,7 @@ SeeAudio *seec = [[SeeAudio alloc] initWithFrame:self.view.bounds];
 {
 
   //线形运动，不要缓动
-  [UIView animateWithDuration:26 delay:0.0 options:UIViewAnimationOptionCurveLinear animations:^{
+  [UIView animateWithDuration:265 delay:0.0 options:UIViewAnimationOptionCurveLinear animations:^{
       [self->vv setContentOffset:CGPointMake(self->ww-screenW, 0) animated:NO];
        } completion:^(BOOL finished) {
            

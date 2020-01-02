@@ -43,7 +43,7 @@ value = 2.5 * 1000 = 2500;
 #define minMaxX(x,mn,mx) (x<=mn?mn:(x>=mx?mx:x)) //(x<=noiseFloor?noiseFloor:(x>=0?0:x)
 #define spaceX 4
 #define KimageHeight 200
-#define padding 70
+#define padding 40
 #define halfScreenW ([UIScreen mainScreen].bounds.size.width/2)
 
 @interface SeeAudio ()
@@ -57,6 +57,7 @@ value = 2.5 * 1000 = 2500;
     self = [super initWithFrame:frame];
     return self;
 }
+//get data
 - (void)renderPNGAudioPictogramLogForAsset:(AVURLAsset *)songAsset
                                       done:(void(^)(UIImage *image,NSInteger imageWidth))done
 {
@@ -189,7 +190,7 @@ value = 2.5 * 1000 = 2500;
     
     
 }
-
+//get plot
 - (void) plotLogGraph:(Float32 *) samples
          maximumValue:(Float32) normalizeMax
             drowCount:(NSInteger)drowCount
