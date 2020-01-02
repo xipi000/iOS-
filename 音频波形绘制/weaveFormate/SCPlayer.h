@@ -14,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 -(void)shareButtonClick:(BOOL)b;
 -(void)fullScreenButtonClick:(BOOL)b;
 -(void)itemPlayToEnd;
--(void)timeRaun;
+-(void)timeRunAndTime:(NSInteger)runTime;
 @end
 @interface SCPlayer : UIView
 @property (nonatomic, strong) UIView *supperView;

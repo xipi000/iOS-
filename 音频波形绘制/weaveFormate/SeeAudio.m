@@ -5,16 +5,6 @@
 //  Created by 石川 on 2019/12/24.
 //  Copyright © 2019 石川. All rights reserved.
 //
-
-#import "SeeAudio.h"
-#import <stdlib.h>
-#define noiseFloor (-50.0)
-#define decibel(amplitude) (20 * log10( fabsf(amplitude)/32767.0 )) //转换为[0 - 100]
-#define minMaxX(x,mn,mx) (x<=mn?mn:(x>=mx?mx:x)) //(x<=noiseFloor?noiseFloor:(x>=0?0:x)
-#define spaceX 4
-#define KimageHeight 200
-#define padding 70
-#define halfScreenW ([UIScreen mainScreen].bounds.size.width/2)
 /*
  if(x<=-50){
  return -50;
@@ -25,44 +15,38 @@
  return x;
  }
  }
- 
- */
+
+1.为了音视频的编辑显示以及其他处理，需要设置一个最的小标准，因而产生CMTime，
+（eg:如果音视频编辑器上的一格，表示好几帧，那么这几帧无法拆分）
+2.eg：0.001s 播放了 1 帧，用CMTime表示，最好是一个CMTime的value增加 1 ，音视频增加1帧。
+（只要设置timescale=1000，value = 0.001s * （1000份/s）= 1 份 ）
+3.不能以增加零点几个CMTime的value，音视频增加1帧，这样就没有意义了，所以只能大，可以用增加几个CMTime的value，音视频增加1帧。
+eg：如果设置 timescale = 10000  CMTime的value增加10，音视频增加1帧。
+
+typedef struct {
+CMTimeValue value; // 当前的CMTimeValue 的值
+CMTimeScale timescale; //时间尺  时间基  当前的CMTimeValue 的参考标准 ( 即把1s分为多少份)
+CMTimeFlags flags;
+CMTimeEpoch epoch;
+} CMTime
+
+eg:timescale = 1000 份/s; 时间 2.5s 转换为CMTime 的value为多大
+value = 2.5 * 1000 = 2500;
+
+真实时间 = value/timescale = （2500 份） / （1000 份/s）= 2.5s;
+时间标尺下的总时长（CMTime value）（timescale 即把1s分为多少份 ）
+*/
+#import "SeeAudio.h"
+#import <stdlib.h>
+#define noiseFloor (-50.0)
+#define decibel(amplitude) (20 * log10( fabsf(amplitude)/32767.0 )) //转换为[0 - 100]
+#define minMaxX(x,mn,mx) (x<=mn?mn:(x>=mx?mx:x)) //(x<=noiseFloor?noiseFloor:(x>=0?0:x)
+#define spaceX 4
+#define KimageHeight 200
+#define padding 70
+#define halfScreenW ([UIScreen mainScreen].bounds.size.width/2)
+
 @interface SeeAudio ()
-{
-    /*
-     1.为了音视频的编辑显示以及其他处理，需要设置一个最的小标准，因而产生CMTime，
-     （eg:如果音视频编辑器上的一格，表示好几帧，那么这几帧无法拆分）
-     2.eg：0.001s 播放了 1 帧，用CMTime表示，最好是一个CMTime的value增加 1 ，音视频增加1帧。
-     （只要设置timescale=1000，value = 0.001s * （1000份/s）= 1 份 ）
-     3.不能以增加零点几个CMTime的value，音视频增加1帧，这样就没有意义了，所以只能大，可以用增加几个CMTime的value，音视频增加1帧。
-     eg：如果设置 timescale = 10000  CMTime的value增加10，音视频增加1帧。
-     
-     typedef struct {
-     CMTimeValue value; // 当前的CMTimeValue 的值
-     CMTimeScale timescale; //时间尺  时间基  当前的CMTimeValue 的参考标准 ( 即把1s分为多少份)
-     CMTimeFlags flags;
-     CMTimeEpoch epoch;
-     } CMTime
-     
-     eg:timescale = 1000 份/s; 时间 2.5s 转换为CMTime 的value为多大
-     value = 2.5 * 1000 = 2500;
-     
-     真实时间 = value/timescale = （2500 份） / （1000 份/s）= 2.5s;
-     */
-    int64_t totalSamples; //时间标尺下的总时长（CMTime value）（timescale 即把1s分为多少份 ）
-    
-//    AVURLAsset *asset;
-    UIImageView *imageView;
-    AVPlayer *p;
-    
-    int targetOverDraw;
-    int tickHeight;
-    float duration;
-    UInt32 channelCount;
-    Float32 maximum;
-    NSMutableData *fullSongData;
-    int noisyFloot;
-}
 @end
 
 
@@ -71,13 +55,18 @@
 -(instancetype)initWithFrame:(CGRect)frame
 {
     self = [super initWithFrame:frame];
-   
     return self;
 }
 - (void)renderPNGAudioPictogramLogForAsset:(AVURLAsset *)songAsset
                                       done:(void(^)(UIImage *image,NSInteger imageWidth))done
 {
     // TODO: break out subsampling code
+    //声道数
+    UInt32 channelCount = 0;
+    //最大平均值
+    Float32 maximum;
+    //存所有平均值
+    NSMutableData *fullSongData;
     NSError *error = nil;
     //创建多媒体阅读器
     AVAssetReader *reader = [[AVAssetReader alloc] initWithAsset:songAsset error:&error];
@@ -86,7 +75,7 @@
     //获取其中的一个音频轨道
     AVAssetTrack *songTrack =[audioTracks objectAtIndex:0];
     //CMTime  时间 = value / 时间基
-    duration = songAsset.duration.value/songAsset.duration.timescale;
+    float duration = songAsset.duration.value/songAsset.duration.timescale;
     int32_t timescale = songAsset.duration.timescale;
     
     NSLog(@"duration=%f",duration);
@@ -280,7 +269,7 @@
     [line moveToPoint:CGPointMake(0, 0)];
     [line addLineToPoint:CGPointMake(imageSize.width,0)];
     [line setLineWidth:1.0];
-    [line stroke];
+//    [line stroke];
     //center line
     [line moveToPoint:CGPointMake(0, KimageHeight/2)];
     [line addLineToPoint:CGPointMake(imageSize.width, KimageHeight/2)];
@@ -295,6 +284,6 @@
     
     UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
-    done(image,drowCount*spaceX);
+    done(image,drowCount*spaceX+halfScreenW*2);
 }
 @end

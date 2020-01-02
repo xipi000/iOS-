@@ -549,8 +549,8 @@
         int currentMin  = currentTime / 60;
         int currentSecond  = currentTime % 60;
         
-        if ([weakSelf.delegate respondsToSelector:@selector(timeRaun)]) {
-                   [weakSelf.delegate timeRaun];
+        if ([weakSelf.delegate respondsToSelector:@selector(timeRunAndTime:)]) {
+                   [weakSelf.delegate timeRunAndTime:currentTime];
                }
         NSString *aullTime = [NSString stringWithFormat:@"%.2d:%.2d",allMin,allSecond];
         NSString *currentTime1 = [NSString stringWithFormat:@"%.2d:%.2d",currentMin,currentSecond];
