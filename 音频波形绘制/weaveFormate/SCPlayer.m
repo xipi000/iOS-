@@ -65,7 +65,7 @@
     [self.toolBar addSubview:self.progressView];
     [self.toolBar addSubview:self.progressSlider];
     [self.toolBar addSubview:self.timeLab];
-
+    
     [self.progressView3 addSubview:self.progressView2];
     
     [self.headView addSubview:self.backButton];
@@ -166,6 +166,7 @@
         _progressSlider.maximumTrackTintColor = [UIColor clearColor];
         _progressSlider.minimumTrackTintColor = [UIColor redColor];
         [_progressSlider setThumbImage:[UIImage imageNamed:@"yuan_normal"] forState:UIControlStateNormal];
+        [_progressSlider addTarget:self action:@selector(sliderChangeClick:) forControlEvents:UIControlEventValueChanged];
     }
     return _progressSlider;
 }
@@ -391,49 +392,59 @@
 #pragma mark - 点击调进度
 - (void)tap:(UITapGestureRecognizer *)sender {
     
-    self.centUpdatTime = NO;
+//    self.centUpdatTime = NO;
+//
+//    CGPoint touchPoint = [sender locationInView:self.progressSlider];
+//    CGFloat value = touchPoint.x / CGRectGetWidth(self.progressSlider.bounds);
+//    [self.progressSlider setValue:value animated:YES];
+//    [self sliderChangeClick:self.progressSlider];
+//
+//
+//    [self popTimePlay];
+//
+//    if (sender.state == UIGestureRecognizerStateEnded) {
+//        NSLog(@"结束点击");
+//        if (self.playButtonStatu == YES) {
+//            if (self.canPlay) {
+//                [self.player play];
+//            }
+//
+//        }
+//    }
     
-    CGPoint touchPoint = [sender locationInView:self.progressSlider];
-    CGFloat value = touchPoint.x / CGRectGetWidth(self.progressSlider.bounds);
-    [self.progressSlider setValue:value animated:YES];
-    [self sliderChangeClick:self.progressSlider];
     
-    
-    [self popTimePlay];
-    
-    if (sender.state == UIGestureRecognizerStateEnded) {
-        NSLog(@"结束点击");
-        if (self.playButtonStatu == YES) {
-            if (self.canPlay) {
-                [self.player play];
-            }
-            
-        }
-    }
     
 }
 -(void)sliderChangeClick:(UISlider *)sender {
     self.centUpdatTime = NO;
+    //拖拽的时候先暂停
+//    if (self.player.rate > 0) {
+//        [self.player pause];
+//    }
+    
+    
+    [self popTimePlay];
+    NSLog(@"%f",sender.value);
 }
 #pragma mark - SliederAction
 - (void)handleTouchDown:(UISlider *)slider{
     NSLog(@"TouchDown");
-    if (self.playButtonStatu == YES) {
-        self.centUpdatTime = NO;
-    }
+//    if (self.playButtonStatu == YES) {
+//        self.centUpdatTime = NO;
+//    }
     
 }
 
 - (void)handleTouchUp:(UISlider *)slider{
     NSLog(@"TouchUp");
-    if (self.playButtonStatu == YES) {
-        self.centUpdatTime = NO;
-        if (self.canPlay) {
-            [self.player play];
-        }
-    }
-    
-    [self popTimePlay];
+//    if (self.playButtonStatu == YES) {
+//        self.centUpdatTime = NO;
+//        if (self.canPlay) {
+//            [self.player play];
+//        }
+//    }
+//
+//    [self popTimePlay];
 }
 //调到播放
 -(void)popTimePlay
@@ -491,7 +502,7 @@
         self.progressView.progress = progress/self.allTime;
         self.progressView3.progress = progress/self.allTime;
         
-       
+        
         //缓存时间
         //        int currentTime = progress;
         //        int currentHour = currentTime / (60*60);
@@ -550,8 +561,8 @@
         int currentSecond  = currentTime % 60;
         
         if ([weakSelf.delegate respondsToSelector:@selector(timeRunAndTime:)]) {
-                   [weakSelf.delegate timeRunAndTime:currentTime];
-               }
+            [weakSelf.delegate timeRunAndTime:currentTime];
+        }
         NSString *aullTime = [NSString stringWithFormat:@"%.2d:%.2d",allMin,allSecond];
         NSString *currentTime1 = [NSString stringWithFormat:@"%.2d:%.2d",currentMin,currentSecond];
         if (!weakSelf.isLive) {
@@ -691,7 +702,7 @@
 // self touch
 #pragma mark - 点击调进度
 - (void)tap2:(UITapGestureRecognizer *)sender {
-   
+    
     if (self.openTooBar) {
         [self showButton:self.lockScreen];
     }else{
