@@ -34,9 +34,9 @@
     //    [self convertTapped:[[NSBundle mainBundle] URLForResource:@"小青蛙唱歌" withExtension:@"mp3"] toFileName:path resultBlock:nil];
     //
     
-//     [self cutAudio];
-       [self getWav];
-//    [self seeAudio];
+//    [self cutAudio];
+//       [self getWav];
+   [self seeAudio];
 //    [self audioPlayer];
 }
 -(void)seeAudio
@@ -75,7 +75,7 @@
     NSString *path = [document stringByAppendingPathComponent:@"test.wav"];
     NSError *error;
     audioPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:[NSURL URLWithString:path] error:&error];
-//    [audioPlayer play];
+   [audioPlayer play];
 }
 -(void)getWav
 {
@@ -270,7 +270,9 @@ typedef void (^ConvertPCMCompletionBlock)(NSString *destFilePath);
             } else {
                 // done!
                 [assetWriterInput markAsFinished];
-                [assetWriter finishWritingWithCompletionHandler:nil];
+                [assetWriter finishWritingWithCompletionHandler:^{
+                    NSLog(@"已经写入磁盘");
+                }];
                 [assetReader cancelReading];
                 if(callback!=nil)
                     callback(exportPath);
