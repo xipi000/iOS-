@@ -18,6 +18,7 @@
     NSInteger ww;
     NSMutableData *allSongSamples;
     AVAudioPlayer *audioPlayer;
+    int count;
 }
 @end
 
@@ -36,8 +37,9 @@
     
 //    [self cutAudio];
 //       [self getWav];
-   [self seeAudio];
+//   [self seeAudio];
 //    [self audioPlayer];
+    [self appendAudio];
 }
 -(void)seeAudio
 {
@@ -81,7 +83,8 @@
 {
     NSString *document = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
     NSString *path = [document stringByAppendingPathComponent:@"test2.wav"];
-    [self convertTapped:[[NSBundle mainBundle] URLForResource:@"小青蛙唱歌" withExtension:@"mp3"] toFileName:path resultBlock:nil];
+    NSURL *url = [[NSBundle mainBundle] URLForResource:@"whenImissYou" withExtension:@"mp3"];
+    [self convertTapped:url toFileName:path resultBlock:nil];
 }
 -(void)timeRunAndTime:(NSInteger)runTime
 {
@@ -99,7 +102,7 @@
 {
     
     NSString *document = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
-    NSString *path = [document stringByAppendingPathComponent:@"test2.wav"];
+    NSString *path = [document stringByAppendingPathComponent:@"test.wav"];
     
     
     NSData *allSongSamples1 = [[NSData alloc] initWithContentsOfFile:path];
@@ -119,7 +122,6 @@
     
     
     NSString *path1 = [document stringByAppendingPathComponent:@"test.wav"];
-    
     [self writeAudioData:allSongSamples toFile:path1];
 }
 #define AUDIO_SAMPLE_RATE 48000
@@ -128,7 +130,8 @@
 #define AUDIO_BITS_PER_CHANNEL 16
 #define AUDIO_BYTES_PER_PACKET 2
 #define AUDIO_BYTES_PER_FRAME 2
--(void)writeAudioData:(NSData *)data toFile:(NSString *)targetFilePath{
+-(void)writeAudioData:(NSData *)data toFile:(NSString *)targetFilePath
+{
     
     NSFileManager * fm = [NSFileManager defaultManager];
     [fm removeItemAtPath:targetFilePath error:nil];
@@ -182,24 +185,32 @@
     [handle seekToEndOfFile];
     [handle writeData:data];
     [handle closeFile];
+    [self audioPlayer];
 }
+
+
+
+
+
+
+//把voice转换为wav，pcm格式才可以随便拼接
 typedef void (^ConvertPCMCompletionBlock)(NSString *destFilePath);
 -(void)convertTapped:(NSURL*)fromUrl toFileName:(NSString *)exportPath resultBlock:(ConvertPCMCompletionBlock)callback{
     AVURLAsset *songAsset = [AVURLAsset URLAssetWithURL:fromUrl options:nil];
     if(songAsset==nil) return;
     NSError *assetError = nil;
     AVAssetReader *assetReader = [AVAssetReader assetReaderWithAsset:songAsset
-                                                               error:&assetError];
+                                                                error:&assetError];
     if (assetError) {
         NSLog (@"error: %@", assetError);
-        //        [assetReader release];
         return;
     }
     AVAssetTrack *track = [[songAsset tracksWithMediaType:AVMediaTypeAudio] objectAtIndex:0];
-    AVAssetReaderOutput *assetReaderOutput = [AVAssetReaderAudioMixOutput assetReaderAudioMixOutputWithAudioTracks:[NSArray arrayWithObject:track]audioSettings: nil];
+    AVAssetReaderOutput *assetReaderOutput = [AVAssetReaderAudioMixOutput
+                                               assetReaderAudioMixOutputWithAudioTracks:[NSArray arrayWithObject:track]
+                                               audioSettings: nil];
     if (! [assetReader canAddOutput: assetReaderOutput]) {
-        //        [assetReaderOutput release];
-        //        [assetReader release];
+       
         NSLog (@"can't add reader output... die!");
         return;
     }
@@ -210,11 +221,10 @@ typedef void (^ConvertPCMCompletionBlock)(NSString *destFilePath);
     }
     NSURL *exportURL = [NSURL fileURLWithPath:exportPath];
     AVAssetWriter *assetWriter = [AVAssetWriter assetWriterWithURL:exportURL
-                                                          fileType:AVFileTypeWAVE
-                                                             error:&assetError];
+                                                           fileType:AVFileTypeWAVE
+                                                              error:&assetError];
     if (assetError) {
         NSLog (@"error: %@", assetError);
-        //        [assetWriter release];
         return;
     }
     AudioChannelLayout channelLayout;
@@ -231,11 +241,10 @@ typedef void (^ConvertPCMCompletionBlock)(NSString *destFilePath);
                                     [NSNumber numberWithBool:NO], AVLinearPCMIsBigEndianKey,
                                     nil];
     AVAssetWriterInput *assetWriterInput = [AVAssetWriterInput assetWriterInputWithMediaType:AVMediaTypeAudio
-                                                                              outputSettings:outputSettings];
+                                                                               outputSettings:outputSettings];
     if ([assetWriter canAddInput:assetWriterInput]) {
         [assetWriter addInput:assetWriterInput];
     } else {
-        //        [assetWriterInput release];
         NSLog (@"can't add asset writer input... die!");
         return;
     }
@@ -255,42 +264,96 @@ typedef void (^ConvertPCMCompletionBlock)(NSString *destFilePath);
     [assetWriterInput requestMediaDataWhenReadyOnQueue:mediaInputQueue
                                             usingBlock: ^
      {
-        // NSLog (@"top of block");
-        while (assetWriterInput.readyForMoreMediaData) {
-            CMSampleBufferRef nextBuffer = [assetReaderOutput copyNextSampleBuffer];
-            if (nextBuffer) {
-                // append buffer
-                [assetWriterInput appendSampleBuffer: nextBuffer];
-                convertedByteCount += CMSampleBufferGetTotalSampleSize (nextBuffer);
-                
-                CMSampleBufferInvalidate(nextBuffer);
-                CFRelease(nextBuffer);
-                nextBuffer = NULL;
-                
-            } else {
-                // done!
-                [assetWriterInput markAsFinished];
-                [assetWriter finishWritingWithCompletionHandler:^{
-                    NSLog(@"已经写入磁盘");
-                }];
-                [assetReader cancelReading];
-                if(callback!=nil)
-                    callback(exportPath);
-                
-                
-                //                 [assetReader release];
-                //                 [assetReaderOutput release];
-                //                 [assetWriter release];
-                //                 [assetWriterInput release];
-                
-                //                 dispatch_release(mediaInputQueue);
-                
-                
-                break;
-            }
-        }
-        
-    }];
+         // NSLog (@"top of block");
+         while (assetWriterInput.readyForMoreMediaData) {
+             CMSampleBufferRef nextBuffer = [assetReaderOutput copyNextSampleBuffer];
+             if (nextBuffer) {
+                 // append buffer
+                 [assetWriterInput appendSampleBuffer: nextBuffer];
+                 convertedByteCount += CMSampleBufferGetTotalSampleSize (nextBuffer);
+                 
+                 CMSampleBufferInvalidate(nextBuffer);
+                 CFRelease(nextBuffer);
+                 nextBuffer = NULL;
+                 
+             } else {
+                 // done!
+                 [assetWriterInput markAsFinished];
+                 [assetWriter finishWritingWithCompletionHandler:^{
+                     NSLog(@"已经存入磁盘");
+                     if (self->count==2) {
+                         [self append];
+                     }
+                     self->count++;
+                 }];
+                 [assetReader cancelReading];
+                 if(callback!=nil)
+                     callback(exportPath);
+                 break;
+             }
+         }
+         
+     }];
     NSLog (@"bottom of convertTapped:");
 }
+
+-(void)appendAudio
+{
+    count = 1;
+    
+    NSString *document = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
+    NSString *path = [document stringByAppendingPathComponent:@"appand1.wav"];
+    NSURL *url1 = [[NSBundle mainBundle] URLForResource:@"3" withExtension:@"m4a"];
+    [self convertTapped:url1 toFileName:path resultBlock:nil];
+    
+
+    NSString *path2 = [document stringByAppendingPathComponent:@"appand2.wav"];
+    NSURL *url2 = [[NSBundle mainBundle] URLForResource:@"4" withExtension:@"m4a"];
+    [self convertTapped:url2 toFileName:path2 resultBlock:nil];
+    
+
+  
+   
+}
+-(void)append
+{
+     NSString *document = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
+    
+       NSString *path11 = [document stringByAppendingPathComponent:@"appand1.wav"];
+       NSMutableData *wdata1 = [[NSMutableData alloc] initWithContentsOfFile:path11];
+    
+        
+      long wav1DataSize = [wdata1 length] - 44-4096;
+       
+       allSongSamples = [[NSMutableData alloc] initWithCapacity:wav1DataSize];
+       [allSongSamples appendData:[wdata1 subdataWithRange:NSMakeRange(44+4096, wav1DataSize)]];
+       wdata1  =  allSongSamples;
+    
+       
+    
+    
+    
+    
+       NSString *path22 = [document stringByAppendingPathComponent:@"appand2.wav"];
+       NSMutableData *wdata2 = [[NSMutableData alloc] initWithContentsOfFile:path22];
+    
+    
+    
+    {
+        long wav1DataSize = [wdata2 length] - 44-4096;
+        allSongSamples = [[NSMutableData alloc] initWithCapacity:wav1DataSize];
+        [allSongSamples appendData:[wdata2 subdataWithRange:NSMakeRange(44+4096, wav1DataSize)]];
+        wdata2  =  allSongSamples;
+    }
+    
+    
+    
+    
+       [wdata1 appendData:wdata2];
+       NSString *path1 = [document stringByAppendingPathComponent:@"test.wav"];
+       [self writeAudioData:wdata1 toFile:path1];
+}
+
+
+
 @end
